@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Day 7: Review Words (Pro Player)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            touch-action: manipulation;
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        .btn-press:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* 模糊遮罩 */
+        .blur-reveal {
+            filter: blur(8px);
+            opacity: 0.5;
+            transition: all 0.5s ease;
+            user-select: none;
+            cursor: pointer;
+        }
+        .revealed {
+            filter: blur(0);
+            opacity: 1;
+            cursor: default;
+        }
+
+        /* 动画 */
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 自定义进度条样式 */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #cbd5e1;
+            border-radius: 2px;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:active {
+            transform: scale(1.3);
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body class="bg-blue-50 text-gray-800 select-none">
+
+<div id="root"></div>
+
+<script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- 图标组件（对应前六天所有词） ---
+    const IconUp = () => <span className="text-6xl">⬆️</span>;
+    const IconSun = () => <span className="text-6xl">☀️</span>;
+    const IconFace = () => <span className="text-6xl">😊</span>;
+    const IconWash = () => <span className="text-6xl">💦</span>;
+    const IconTeeth = () => <span className="text-6xl">😁</span>;
+    const IconBrush = () => <span className="text-6xl">🪥</span>;
+    const IconShirt = () => <span className="text-6xl">👕</span>;
+    const IconPutOn = () => <span className="text-6xl">🧥</span>;
+    const IconShoes = () => <span className="text-6xl">👟</span>;
+    const IconFeet = () => <span className="text-6xl">🦶</span>;
+    const IconWater = () => <span className="text-6xl">💧</span>;
+    const IconCup = () => <span className="text-6xl">🥛</span>;
+
+    const IconVolume = () => <span>🔊</span>;
+    const IconPlay = () => <span className="ml-1 text-xl">▶️</span>;
+    const IconPause = () => <span className="text-xl">⏸️</span>;
+    const IconCheck = () => <span className="text-blue-500">✅</span>;
+    const IconCircle = () => <div className="w-5 h-5 rounded-full border-2 border-gray-300"></div>;
+    const IconBook = () => <span className="text-2xl">📚</span>;
+
+    const Day7App = () => {
+        // 全局 UI 状态
+        const [activeTab, setActiveTab] = useState('learn');
+
+        // 全局播放器状态
+        const [isPlaying, setIsPlaying] = useState(false);
+        const [currentFile, setCurrentFile] = useState(null);
+        const [currentTime, setCurrentTime] = useState(0);
+        const [duration, setDuration] = useState(0);
+        const audioRef = useRef(new Audio());
+
+        // 内容状态
+        const [currentVocabIndex, setCurrentVocabIndex] = useState(0);
+        const [showVocabTranslation, setShowVocabTranslation] = useState(false);
+        const [showStoryTranslation, setShowStoryTranslation] = useState(false);
+        const [currentStep, setCurrentStep] = useState(0);
+
+        // 滑动切卡片
+        const touchStartX = useRef(0);
+        const touchEndX = useRef(0);
+
+        // Day 7：复习 Day1–Day6 的全部单词
+        const content = {
+            title: "Day 7: Review Words",
+            vocab: [
+                // Day 1 起床：Up, Sun
+                {
+                    word: "Up",
+                    cn: "起来 / 起床",
+                    icon: <IconUp />,
+                    sentence: "Wake up!",
+                    audioWord: "word_up.mp3",
+                    audioSent: "sent_wake_up.mp3"
+                },
+                {
+                    word: "Sun",
+                    cn: "太阳",
+                    icon: <IconSun />,
+                    sentence: "Hello, sun.",
+                    audioWord: "word_sun.mp3",
+                    audioSent: "sent_hello_sun.mp3"
+                },
+                // Day 2 洗脸：Face, Wash
+                {
+                    word: "Face",
+                    cn: "脸",
+                    icon: <IconFace />,
+                    sentence: "Wash my face.",
+                    audioWord: "word_face.mp3",
+                    audioSent: "sent_wash_my_face.mp3"
+                },
+                {
+                    word: "Wash",
+                    cn: "洗 / 洗一洗",
+                    icon: <IconWash />,
+                    sentence: "Wash, wash, wash.",
+                    audioWord: "word_wash.mp3",
+                    audioSent: "sent_wash.mp3"
+                },
+                // Day 3 刷牙：Teeth, Brush
+                {
+                    word: "Teeth",
+                    cn: "牙齿",
+                    icon: <IconTeeth />,
+                    sentence: "Brush your teeth.",
+                    audioWord: "word_teeth.mp3",
+                    audioSent: "sent_brush_your_teeth.mp3"
+                },
+                {
+                    word: "Brush",
+                    cn: "刷 / 刷一刷",
+                    icon: <IconBrush />,
+                    sentence: "Brush, brush, brush.",
+                    audioWord: "word_brush.mp3",
+                    audioSent: "sent_brush.mp3"
+                },
+                // Day 4 穿衣：Shirt, Put on
+                {
+                    word: "Shirt",
+                    cn: "上衣 / 衬衫",
+                    icon: <IconShirt />,
+                    sentence: "Put on your shirt.",
+                    audioWord: "word_shirt.mp3",
+                    audioSent: "sent_shirt.mp3"
+                },
+                {
+                    word: "Put on",
+                    cn: "穿上",
+                    icon: <IconPutOn />,
+                    sentence: "Put on, put on.",
+                    audioWord: "word_put_on.mp3",
+                    audioSent: "sent_put_on_put_on.mp3"
+                },
+                // Day 5 穿鞋：Shoes, Feet
+                {
+                    word: "Shoes",
+                    cn: "鞋子",
+                    icon: <IconShoes />,
+                    sentence: "One, two, shoes!",
+                    audioWord: "word_shoes.mp3",
+                    audioSent: "sent_shoes.mp3"
+                },
+                {
+                    word: "Feet",
+                    cn: "脚 / 小脚丫",
+                    icon: <IconFeet />,
+                    sentence: "Tap your feet.",
+                    audioWord: "word_feet.mp3",
+                    audioSent: "sent_feet.mp3"
+                },
+                // Day 6 喝水：Water, Cup
+                {
+                    word: "Water",
+                    cn: "水",
+                    icon: <IconWater />,
+                    sentence: "Drink some water.",
+                    audioWord: "word_water.mp3",
+                    audioSent: "sent_drink_some_water.mp3"
+                },
+                {
+                    word: "Cup",
+                    cn: "杯子",
+                    icon: <IconCup />,
+                    sentence: "Get your cup.",
+                    audioWord: "word_cup.mp3",
+                    audioSent: "sent_get_your_cup.mp3"
+                }
+            ],
+            // 剧本：家长带孩子做“单词+动作”复习
+            script: [
+                {
+                    step: 1,
+                    action: "动作：站在固定位置，告诉孩子“我们来玩单词复习游戏”",
+                    parentSay: "Let’s review our morning words!",
+                    cn: "我们来复习一下早上学过的单词吧！",
+                    tip: "可以先快速提一提 Day1–Day6 的中文，让孩子知道等下会有很多熟悉的内容。",
+                    audio: "guide_day7_step1.mp3"
+                },
+                {
+                    step: 2,
+                    action: "动作：每说一个单词就做一个小动作（Up 伸懒腰，Sun 打开窗帘，Face/Wash 做洗脸动作…）",
+                    parentSay: "Up, sun, face, wash. Teeth, brush. Shirt, put on. Shoes, feet. Water, cup!",
+                    cn: "Up、Sun、Face、Wash、Teeth、Brush、Shirt、Put on、Shoes、Feet、Water、Cup！",
+                    tip: "不求全部做对，可以挑孩子最熟悉的几个动作做，多夸“Great job!”。",
+                    audio: "guide_day7_step2.mp3"
+                },
+                {
+                    step: 3,
+                    action: "动作：家长说中文提示，让孩子自己说英文单词，最后一起喊 I can do it!",
+                    parentSay: "You know these words. I can do it!",
+                    cn: "这些单词你都会啦——I can do it!",
+                    tip: "建议这个环节侧重“成就感”，可以录一小段视频，只要拍到孩子开心说出一两个单词就够了。",
+                    audio: "guide_day7_step3.mp3"
+                }
+            ],
+            // 小故事：把所有单词串成“Morning Words Parade”
+            story: {
+                title: "Morning Words Parade",
+                textEn: "Today is Review Day. Little Fox stands in the room. Mom says, 'Let’s have a Morning Words Parade!' First, Little Fox says, 'Up!' and stretches big. Then he says, 'Sun!' and pretends to open the window. 'Face, wash.' He washes his face. 'Teeth, brush.' He brushes his teeth. 'Shirt, put on.' He puts on his shirt. 'Shoes, feet.' He taps his feet and puts on his shoes. 'Water, cup.' He holds an invisible cup and drinks. Mom smiles and claps. Little Fox shouts, 'I can do it!' The Morning Words Parade is a big success.",
+                textCn: "今天是复习日。小狐狸站在房间中间，妈妈说：“我们来一场晨间单词大游行！”小狐狸先说“Up”，伸一个大懒腰；再说“Sun”，假装把窗户推开。接着“Face, wash”，他做洗脸的动作；“Teeth, brush”，他做刷牙的动作；“Shirt, put on”，他好像在穿上衣；“Shoes, feet”，他拍拍小脚，穿上鞋子；“Water, cup”，他拿起一只“看不见的杯子”喝一口水。妈妈笑着鼓掌，小狐狸大声喊：“I can do it!” 这场晨间单词大游行，大成功！",
+                audio: "story_day7.mp3"
+            },
+            // 磨耳朵：把 12 个单词做成节奏感强的小 chant
+            scenarioAudio: "scenario_day7.mp3"
+        };
+
+        // --- 音频事件绑定 ---
+        useEffect(() => {
+            const audio = audioRef.current;
+
+            const updateTime = () => {
+                setCurrentTime(audio.currentTime);
+            };
+
+            const onLoadedMetadata = () => {
+                if (!isNaN(audio.duration)) {
+                    setDuration(audio.duration);
+                }
+            };
+
+            const onEnded = () => {
+                setIsPlaying(false);
+                setCurrentTime(0);
+            };
+
+            audio.addEventListener('timeupdate', updateTime);
+            audio.addEventListener('loadedmetadata', onLoadedMetadata);
+            audio.addEventListener('ended', onEnded);
+
+            return () => {
+                audio.removeEventListener('timeupdate', updateTime);
+                audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+                audio.removeEventListener('ended', onEnded);
+                audio.pause();
+            };
+        }, []);
+
+        // --- 播放逻辑 ---
+        const handlePlayClick = (filename) => {
+            const audio = audioRef.current;
+
+            if (currentFile === filename) {
+                if (isPlaying) {
+                    audio.pause();
+                    setIsPlaying(false);
+                } else {
+                    audio.play().then(() => setIsPlaying(true));
+                }
+                return;
+            }
+
+            audio.src = filename;
+            setCurrentFile(filename);
+            setCurrentTime(0);
+            setDuration(0);
+
+            audio.play()
+                .then(() => {
+                    setIsPlaying(true);
+                })
+                .catch((err) => {
+                    console.error("播放失败", err);
+                    alert("找不到音频文件: " + filename + "\\n请确保 mp3 文件和 html 在同一目录。");
+                    setIsPlaying(false);
+                });
+        };
+
+        const handleSeek = (e) => {
+            const time = parseFloat(e.target.value);
+            setCurrentTime(time);
+            audioRef.current.currentTime = time;
+        };
+
+        const formatTime = (time) => {
+            if (!time || isNaN(time)) return "0:00";
+            const mins = Math.floor(time / 60);
+            const secs = Math.floor(time % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        };
+
+        // --- 单词卡片滑动 ---
+        const nextCard = () => {
+            if (currentVocabIndex < content.vocab.length - 1) {
+                setCurrentVocabIndex((prev) => prev + 1);
+                setShowVocabTranslation(false);
+            }
+        };
+
+        const prevCard = () => {
+            if (currentVocabIndex > 0) {
+                setCurrentVocabIndex((prev) => prev - 1);
+                setShowVocabTranslation(false);
+            }
+        };
+
+        const handleTouchStart = (e) => {
+            touchStartX.current = e.targetTouches[0].clientX;
+        };
+
+        const handleTouchMove = (e) => {
+            touchEndX.current = e.targetTouches[0].clientX;
+        };
+
+        const handleTouchEnd = () => {
+            if (!touchStartX.current || !touchEndX.current) return;
+            const diff = touchStartX.current - touchEndX.current;
+            if (diff > 50) nextCard();
+            if (diff < -50) prevCard();
+            touchStartX.current = 0;
+            touchEndX.current = 0;
+        };
+
+        return (
+            <div className="flex flex-col min-h-screen max-w-md mx-auto bg-blue-50 shadow-2xl relative pb-28">
+                {/* Header */}
+                <header className="bg-blue-400 text-white p-4 shadow-md text-center sticky top-0 z-10">
+                    <h1 className="text-xl font-bold flex items-center justify-center gap-2">
+                        ⭐️ {content.title}
+                    </h1>
+                </header>
+
+                {/* Main */}
+                <main className="flex-1 p-4 overflow-y-auto pb-24 hide-scrollbar">
+                    {/* TAB: 学单词：复习 Day1–Day6 所有词 */}
+                    {activeTab === 'learn' && (() => {
+                        const item = content.vocab[currentVocabIndex];
+                        return (
+                            <div
+                                className="flex-1 flex flex-col justify-center items-center space-y-6 animate-fade-in"
+                                onTouchStart={handleTouchStart}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                            >
+                                {/* 进度点（12 个小点） */}
+                                <div className="flex gap-1 mb-2 flex-wrap justify-center">
+                                    {content.vocab.map((_, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`h-2 rounded-full transition-all duration-300 ${
+                                                idx === currentVocabIndex ? 'w-6 bg-blue-500' : 'w-2 bg-gray-300'
+                                            }`}
+                                        ></div>
+                                    ))}
+                                </div>
+
+                                {/* 单词卡片 */}
+                                <div className="bg-white w-full rounded-3xl p-8 shadow-xl flex flex-col items-center relative min-h-[360px] justify-between border-b-8 border-blue-100">
+                                    <div className="flex-1 flex flex-col items-center justify-center w-full">
+                                        <div className="mb-6 transform scale-110">
+                                            {item.icon}
+                                        </div>
+
+                                        {/* 英文单词 */}
+                                        <h3
+                                            className="text-3xl font-extrabold text-gray-800 mb-2 cursor-pointer active:text-blue-500 active:scale-95 transition-transform text-center"
+                                            onClick={() => handlePlayClick(item.audioWord)}
+                                        >
+                                            {item.word}
+                                            <span className="text-lg text-blue-400 ml-1">🔈</span>
+                                        </h3>
+                                        <p className="text-xs text-gray-400 mb-4">(点击单词播放读音)</p>
+
+                                        {/* 中文翻译（默认模糊，点击显示） */}
+                                        <div
+                                            onClick={() => setShowVocabTranslation(true)}
+                                            className="w-full text-center py-3 px-2 rounded-xl bg-gray-50 cursor-pointer"
+                                        >
+                                            <p
+                                                className={`text-lg font-medium text-gray-700 transition-all duration-500 ${
+                                                    showVocabTranslation ? 'revealed' : 'blur-reveal'
+                                                }`}
+                                            >
+                                                {item.cn}
+                                            </p>
+                                            {!showVocabTranslation && (
+                                                <p className="text-xs text-gray-400 mt-[-18px] pointer-events-none">
+                                                    点击显示中文
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* 例句 */}
+                                    <div className="w-full mt-4 bg-blue-50 rounded-2xl p-3 flex items-center justify-between border border-blue-100">
+                                        <span className="text-blue-900 font-medium text-base italic">
+                                            "{item.sentence}"
+                                        </span>
+                                        <button
+                                            onClick={() => handlePlayClick(item.audioSent)}
+                                            className="btn-press bg-blue-400 text-white p-3 rounded-full shadow-lg hover:bg-blue-500 transition ml-3"
+                                        >
+                                            <IconVolume />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* 左右切换按钮 */}
+                                <div className="flex justify-between w-full px-4 text-gray-400">
+                                    <button onClick={prevCard} disabled={currentVocabIndex === 0} className="disabled:opacity-20 p-2 text-3xl btn-press">⬅️</button>
+                                    <span className="text-sm mt-2 opacity-50">
+                                        {currentVocabIndex + 1} / {content.vocab.length}
+                                    </span>
+                                    <button onClick={nextCard} disabled={currentVocabIndex === content.vocab.length - 1} className="disabled:opacity-20 p-2 text-3xl btn-press">➡️</button>
+                                </div>
+                            </div>
+                        );
+                    })()}
+
+                    {/* TAB: 磨耳朵：12 个词串成 chant */}
+                    {activeTab === 'audio' && (
+                        <div className="bg-white rounded-2xl p-6 shadow-lg text-center space-y-6 mt-4 animate-fade-in">
+                            <div className="text-6xl animate-bounce">🎵</div>
+                            <div>
+                                <h2 className="text-xl font-bold">Word Review Chant</h2>
+                                <p className="text-gray-500 text-sm mt-1">把前六天的单词串在一起念一遍</p>
+                            </div>
+                            <div className="bg-gray-100 rounded-xl p-4 text-left">
+                                <p className="text-gray-600 font-mono text-sm leading-relaxed">
+                                    "Up, sun, face, wash.<br/>
+                                    Teeth, brush, shirt, put on.<br/>
+                                    Shoes, feet, water, cup.<br/>
+                                    Morning words, say them up!"
+                                </p>
+                            </div>
+                            <div className="space-y-4">
+                                <button
+                                    onClick={() => handlePlayClick(content.scenarioAudio)}
+                                    className={`btn-press w-full py-6 rounded-xl flex items-center justify-center gap-3 font-bold text-xl transition transform hover:scale-105 ${
+                                        isPlaying && currentFile === content.scenarioAudio
+                                            ? 'bg-red-500 text-white'
+                                            : 'bg-green-500 text-white shadow-lg'
+                                    }`}
+                                >
+                                    {isPlaying && currentFile === content.scenarioAudio ? (
+                                        <>
+                                            <IconPause /> 暂停复习音频
+                                        </>
+                                    ) : (
+                                        <>
+                                            <IconPlay /> 播放复习音频
+                                        </>
+                                    )}
+                                </button>
+
+                                {currentFile === content.scenarioAudio && (
+                                    <div className="bg-gray-50 p-3 rounded-xl">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-xs text-gray-500">{formatTime(currentTime)}</span>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max={duration || 0}
+                                                step="0.1"
+                                                value={currentTime}
+                                                onChange={handleSeek}
+                                                className="flex-1"
+                                            />
+                                            <span className="text-xs text-gray-500">{formatTime(duration)}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TAB: 剧本：家长如何带复习 */}
+                    {activeTab === 'guide' && (
+                        <div className="space-y-4 animate-fade-in">
+                            {content.script.map((step, index) => (
+                                <div
+                                    key={index}
+                                    className={`bg-white rounded-xl shadow overflow-hidden transition-all duration-300 ${
+                                        currentStep === index ? 'ring-2 ring-blue-400' : 'opacity-90'
+                                    }`}
+                                >
+                                    <div
+                                        className="p-3 cursor-pointer flex justify-between items-center bg-gray-50 border-b"
+                                        onClick={() => setCurrentStep(index)}
+                                    >
+                                        <span className="font-bold text-gray-700">Step {step.step}</span>
+                                        {currentStep === index ? <IconCheck /> : <IconCircle />}
+                                    </div>
+                                    {currentStep === index && (
+                                        <div className="p-4 space-y-3">
+                                            <div className="text-sm text-blue-700 bg-blue-50 p-2 rounded font-medium">
+                                                ★ {step.action}
+                                            </div>
+                                            <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 relative">
+                                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                                                    家长说:
+                                                </p>
+                                                <p className="text-lg font-bold text-gray-800 pr-8">
+                                                    {step.parentSay}
+                                                </p>
+                                                <p className="text-sm text-gray-500 mt-1">
+                                                    ({step.cn})
+                                                </p>
+                                                <button
+                                                    onClick={() => handlePlayClick(step.audio)}
+                                                    className="absolute right-2 top-2 text-blue-500 p-2 btn-press"
+                                                >
+                                                    <IconVolume />
+                                                </button>
+                                            </div>
+                                            <p className="text-xs text-gray-400 italic text-center">
+                                                "{step.tip}"
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* TAB: 小故事：Morning Words Parade */}
+                    {activeTab === 'story' && (
+                        <div className="bg-white rounded-2xl p-6 shadow-lg space-y-4 mt-2 animate-fade-in flex flex-col h-full relative">
+                            <div className="text-center border-b pb-4">
+                                <h2 className="text-xl font-bold text-blue-600">{content.story.title}</h2>
+                                <p className="text-xs text-gray-400">Read & Listen</p>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto space-y-6 pb-2">
+                                <div className="bg-blue-50 p-4 rounded-xl">
+                                    <p className="text-lg leading-relaxed font-bold text-gray-800">
+                                        {content.story.textEn}
+                                    </p>
+                                </div>
+
+                                <div
+                                    className="relative p-4 rounded-xl border-2 border-dashed border-gray-200 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition"
+                                    onClick={() => setShowStoryTranslation(true)}
+                                >
+                                    <p className="text-xs text-gray-400 mb-2 font-bold">
+                                        中文大意（点击查看）:
+                                    </p>
+                                    <p
+                                        className={`text-base leading-relaxed text-gray-600 transition-all duration-500 ${
+                                            showStoryTranslation ? 'revealed' : 'blur-reveal'
+                                        }`}
+                                    >
+                                        {content.story.textCn}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-auto pt-4 space-y-4">
+                                <button
+                                    onClick={() => handlePlayClick(content.story.audio)}
+                                    className={`btn-press w-full py-6 rounded-xl flex items-center justify-center gap-3 font-bold text-xl text-white shadow-lg transition transform hover:scale-105 ${
+                                        isPlaying && currentFile === content.story.audio
+                                            ? 'bg-red-500'
+                                            : 'bg-blue-500'
+                                    }`}
+                                >
+                                    {isPlaying && currentFile === content.story.audio ? (
+                                        <>
+                                            <IconPause /> 暂停故事
+                                        </>
+                                    ) : (
+                                        <>
+                                            <IconPlay /> 播放故事
+                                        </>
+                                    )}
+                                </button>
+
+                                {currentFile === content.story.audio && (
+                                    <div className="bg-gray-50 p-3 rounded-xl">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-xs text-gray-500">{formatTime(currentTime)}</span>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max={duration || 0}
+                                                step="0.1"
+                                                value={currentTime}
+                                                onChange={handleSeek}
+                                                className="flex-1"
+                                            />
+                                            <span className="text-xs text-gray-500">{formatTime(duration)}</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </main>
+
+                {/* Bottom Nav */}
+                <nav
+                    className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-2 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 max-w-md mx-auto">
+                    <button
+                        onClick={() => setActiveTab('learn')}
+                        className={`flex flex-col items-center p-2 rounded-lg flex-1 ${
+                            activeTab === 'learn' ? 'text-blue-500' : 'text-gray-400'
+                        }`}
+                    >
+                        <span className="text-xl">📖</span>
+                        <span className="text-xs font-medium">单词复习</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('audio')}
+                        className={`flex flex-col items-center p-2 rounded-lg flex-1 ${
+                            activeTab === 'audio' ? 'text-blue-500' : 'text-gray-400'
+                        }`}
+                    >
+                        <span className="text-xl">🎵</span>
+                        <span className="text-xs font-medium">磨耳朵</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('guide')}
+                        className={`flex flex-col items-center p-2 rounded-lg flex-1 ${
+                            activeTab === 'guide' ? 'text-blue-500' : 'text-gray-400'
+                        }`}
+                    >
+                        <span className="text-xl">📋</span>
+                        <span className="text-xs font-medium">剧本</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('story')}
+                        className={`flex flex-col items-center p-2 rounded-lg flex-1 ${
+                            activeTab === 'story' ? 'text-blue-500' : 'text-gray-400'
+                        }`}
+                    >
+                        <IconBook />
+                        <span className="text-xs font-medium">故事</span>
+                    </button>
+                </nav>
+            </div>
+        );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<Day7App />);
+</script>
+</body>
+</html>
