@@ -1,0 +1,19 @@
+[
+  { "text": "toy", "file_name": "word_toy.mp3" },
+  { "text": "Pick up your toy.", "file_name": "sent_pick_up_your_toy.mp3" },
+  { "text": "box", "file_name": "word_box.mp3" },
+  { "text": "Put it in the box.", "file_name": "sent_put_it_in_the_box.mp3" },
+  { "text": "clean up", "file_name": "word_clean_up.mp3" },
+  { "text": "Clean up, clean up.", "file_name": "sent_clean_up_clean_up.mp3" },
+  { "text": "Oh no, toys everywhere!", "file_name": "guide_day8_step1.mp3" },
+  { "text": "Pick up your toy. Put it in the box.", "file_name": "guide_day8_step2.mp3" },
+  { "text": "Clean up, clean up. We did it!", "file_name": "guide_day8_step3.mp3" },
+  {
+    "text": "Oh no, toys everywhere! Pick up your toy. Put it in the box. Clean up, clean up. We did it!",
+    "file_name": "scenario_day8.mp3"
+  },
+  {
+    "text": "Little Robot loves to play with toys. Cars, blocks, balls are on the floor. It is time to clean up. Mom says, 'Pick up your toy.' Robot picks up one car. 'Put it in the box.' Clunk! The car goes in. Pick up, put in. Pick up, put in. Soon the floor is clean. Robot looks around and smiles. Mom claps and says, 'Clean up, clean up. We did it!' Robot feels proud and says, 'Yay! My room is clean.'",
+    "file_name": "story_day8.mp3"
+  }
+]

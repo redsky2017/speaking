@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Day 23: Feelings 2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      touch-action: manipulation;
+    }
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    .btn-press:active {
+      transform: scale(0.95);
+      opacity: 0.8;
+    }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+    .blur-reveal {
+      filter: blur(8px);
+      opacity: 0.5;
+      transition: all 0.5s ease;
+      user-select: none;
+      cursor: pointer;
+    }
+    .revealed {
+      filter: blur(0);
+      opacity: 1;
+      cursor: default;
+    }
+
+    .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      background: #cbd5e1;
+      border-radius: 2px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      transition: transform 0.1s;
+    }
+    input[type=range]::-webkit-slider-thumb:active {
+      transform: scale(1.3);
+      background: #2563eb;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-gray-800 select-none">
+<div id="root"></div>
+
+<script type="text/babel">
+  const { useState, useEffect, useRef } = React;
+
+  // ⭐ 每个文件改这里：22 / 23 / 24 / 25 / 26 / 27 / 28
+  const dayNumber = 23;
+
+  // 图标组件（简单用 emoji）
+  const pageIcon   = () => <span className="text-6xl"><Emoji>🫂</Emoji></span>;
+  const IconHug     = () => <Emoji>🫂</Emoji>;
+  const IconKiss    = () => <Emoji>💋</Emoji>;
+  const IconSmile   = () => <Emoji>😊</Emoji>;
+  const IconCry     = () => <Emoji>😭</Emoji>;
+
+  const Emoji = ({ children }) => <span className="text-6xl">{children}</span>;
+
+  const IconHappy   = () => <Emoji>😊</Emoji>;
+  const IconSad     = () => <Emoji>😢</Emoji>;
+  const IconAngry   = () => <Emoji>😠</Emoji>;
+  const IconScared  = () => <Emoji>😨</Emoji>;
+
+  const IconSleep   = () => <Emoji>😴</Emoji>;
+  const IconBed     = () => <Emoji>🛏️</Emoji>;
+  const IconBlanket = () => <Emoji>🧸</Emoji>;
+  const IconNight   = () => <Emoji>🌙</Emoji>;
+
+  const IconSoft    = () => <Emoji>🧸</Emoji>;
+  const IconWarm    = () => <Emoji>🔥</Emoji>;
+  const IconDark    = () => <Emoji>🌑</Emoji>;
+  const IconLight   = () => <Emoji>💡</Emoji>;
+
+  const IconStar    = () => <Emoji>⭐</Emoji>;
+  const IconMoon    = () => <Emoji>🌙</Emoji>;
+  const IconSky     = () => <Emoji>🌌</Emoji>;
+  const IconDream   = () => <Emoji>💤</Emoji>;
+
+  const IconQuiet   = () => <Emoji>🤫</Emoji>;
+  const IconSlow    = () => <Emoji>🐢</Emoji>;
+  const IconCalm    = () => <Emoji>🍃</Emoji>;
+  const IconGN      = () => <Emoji>🌙</Emoji>;
+
+  const IconReview  = () => <Emoji>📚</Emoji>;
+
+  const IconVolume  = () => <span>🔊</span>;
+  const IconPlay    = () => <span className="ml-1 text-xl">▶️</span>;
+  const IconPause   = () => <span className="text-xl">⏸️</span>;
+  const IconCheck   = () => <span className="text-blue-500">✅</span>;
+  const IconCircle  = () => <div className="w-5 h-5 rounded-full border-2 border-gray-300"></div>;
+  const IconBook    = () => <span className="text-2xl">📖</span>;
+
+  // ------------------ Day 22–28 内容 ------------------
+  const allContent = {23: {
+      title: "Day 23: Feelings 2",
+      icon: <IconHug />,
+      vocab: [
+        {
+          word: "hug",
+          cn: "拥抱",
+          icon: <IconHug />,
+          sentence: "Give me a hug.",
+          audioWord: "word_hug.mp3",
+          audioSent: "sent_give_me_a_hug.mp3"
+        },
+        {
+          word: "kiss",
+          cn: "亲亲",
+          icon: <IconKiss />,
+          sentence: "Kiss, kiss!",
+          audioWord: "word_kiss.mp3",
+          audioSent: "sent_kiss_kiss.mp3"
+        },
+        {
+          word: "smile",
+          cn: "微笑",
+          icon: <IconSmile />,
+          sentence: "Smile, please.",
+          audioWord: "word_smile.mp3",
+          audioSent: "sent_smile_please.mp3"
+        },
+        {
+          word: "cry",
+          cn: "哭",
+          icon: <IconCry />,
+          sentence: "Don't cry.",
+          audioWord: "word_cry.mp3",
+          audioSent: "sent_dont_cry.mp3"
+        }
+      ],
+      script: [
+        {
+          step: 1,
+          action: "动作：张开手臂，示意孩子来抱抱",
+          parentSay: "Give me a hug.",
+          cn: "来抱抱我。",
+          tip: "多用拥抱来回应情绪，让孩子感到安全。",
+          audio: "guide_day23_step1.mp3"
+        },
+        {
+          step: 2,
+          action: "动作：轻轻亲一下孩子额头或脸颊",
+          parentSay: "Kiss, kiss!",
+          cn: "亲亲！",
+          tip: "一边亲一边笑，让孩子把kiss和温暖联系起来。",
+          audio: "guide_day23_step2.mp3"
+        },
+        {
+          step: 3,
+          action: "动作：当孩子快要哭或刚哭，用手轻轻擦擦眼泪",
+          parentSay: "Smile, please. Don't cry.",
+          cn: "笑一笑，好吗？别哭了。",
+          tip: "先共情，再温柔引导，用smile代替一直哭。",
+          audio: "guide_day23_step3.mp3"
+        }
+      ],
+      story: {
+        title: "Hug and Smile",
+        textEn:
+          "Little Robot sees Mom. He runs and says, \"Hug!\" Mom gives him a big hug. Robot says, \"Kiss, kiss!\" and Mom kisses his head. Robot smiles. Then he drops his toy and starts to cry. Mom wipes his tears gently and says, \"Smile, please. Don't cry.\"",
+        textCn:
+          "小机器人看到妈妈，跑过去说：“Hug!（要抱抱！）”妈妈给了他一个大大的拥抱。小机器人又说：“Kiss, kiss!（亲亲！）”妈妈在他头上轻轻亲了一下。小机器人笑了。后来，他不小心把玩具摔在地上，哭了起来。妈妈轻轻帮他擦掉眼泪，说：“Smile, please. Don't cry.（笑一笑，好吗？别哭了。）”",
+        audio: "story_day23.mp3"
+      },
+      scenarioText: "Give me a hug. Kiss, kiss! Smile, please. Don't cry.",
+      scenarioAudio: "scenario_day23.mp3"
+    }};
+
+  // ------------------ React App ------------------
+  const DayApp = () => {
+    const content = allContent[dayNumber];
+
+    const [activeTab, setActiveTab] = useState("learn");
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentFile, setCurrentFile] = useState(null);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const audioRef = useRef(new Audio());
+
+    const [currentVocabIndex, setCurrentVocabIndex] = useState(0);
+    const [showVocabTranslation, setShowVocabTranslation] = useState(false);
+    const [showStoryTranslation, setShowStoryTranslation] = useState(false);
+    const [currentStep, setCurrentStep] = useState(0);
+
+    const touchStartX = useRef(0);
+    const touchEndX = useRef(0);
+
+    useEffect(() => {
+      const audio = audioRef.current;
+      const updateTime = () => setCurrentTime(audio.currentTime);
+      const onLoadedMetadata = () => {
+        if (!isNaN(audio.duration)) setDuration(audio.duration);
+      };
+      const onEnded = () => {
+        setIsPlaying(false);
+        setCurrentTime(0);
+      };
+
+      audio.addEventListener("timeupdate", updateTime);
+      audio.addEventListener("loadedmetadata", onLoadedMetadata);
+      audio.addEventListener("ended", onEnded);
+
+      return () => {
+        audio.removeEventListener("timeupdate", updateTime);
+        audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+        audio.removeEventListener("ended", onEnded);
+        audio.pause();
+      };
+    }, []);
+
+    const handlePlayClick = (filename) => {
+      const audio = audioRef.current;
+
+      if (currentFile === filename) {
+        if (isPlaying) {
+          audio.pause();
+          setIsPlaying(false);
+        } else {
+          audio.play().then(() => setIsPlaying(true));
+        }
+        return;
+      }
+
+      audio.src = filename;
+      setCurrentFile(filename);
+      setCurrentTime(0);
+      setDuration(0);
+
+      audio.play()
+        .then(() => setIsPlaying(true))
+        .catch((err) => {
+          console.error("播放失败", err);
+          alert("找不到音频文件: " + filename + "\n请确保 mp3 文件和 html 在同一目录。");
+          setIsPlaying(false);
+        });
+    };
+
+    const handleSeek = (e) => {
+      const t = parseFloat(e.target.value);
+      setCurrentTime(t);
+      audioRef.current.currentTime = t;
+    };
+
+    const formatTime = (t) => {
+      if (!t || isNaN(t)) return "0:00";
+      const mins = Math.floor(t / 60);
+      const secs = Math.floor(t % 60);
+      return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+    };
+
+    const nextCard = () => {
+      if (currentVocabIndex < content.vocab.length - 1) {
+        setCurrentVocabIndex((prev) => prev + 1);
+        setShowVocabTranslation(false);
+      }
+    };
+    const prevCard = () => {
+      if (currentVocabIndex > 0) {
+        setCurrentVocabIndex((prev) => prev - 1);
+        setShowVocabTranslation(false);
+      }
+    };
+
+    const handleTouchStart = (e) => {
+      touchStartX.current = e.targetTouches[0].clientX;
+    };
+    const handleTouchMove = (e) => {
+      touchEndX.current = e.targetTouches[0].clientX;
+    };
+    const handleTouchEnd = () => {
+      if (!touchStartX.current || !touchEndX.current) return;
+      const diff = touchStartX.current - touchEndX.current;
+      if (diff > 50) nextCard();
+      if (diff < -50) prevCard();
+      touchStartX.current = 0;
+      touchEndX.current = 0;
+    };
+
+    return (
+      <div className="flex flex-col min-h-screen max-w-md mx-auto bg-slate-50 shadow-2xl relative pb-28">
+        {/* Header */}
+        <header className="bg-blue-500 text-white p-4 shadow-md text-center sticky top-0 z-10">
+          <h1 className="text-xl font-bold flex items-center justify-center gap-2">
+            {content.icon} {content.title}
+          </h1>
+          <p className="text-xs text-blue-100">Bedtime Week · Day {dayNumber}</p>
+        </header>
+
+        {/* Main */}
+        <main className="flex-1 p-4 overflow-y-auto pb-24 hide-scrollbar">
+          {/* TAB: 单词 */}
+          {activeTab === "learn" && (() => {
+            const item = content.vocab[currentVocabIndex];
+            return (
+              <div
+                className="flex-1 flex flex-col justify-center items-center space-y-6 animate-fade-in"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                <div className="flex gap-1 mb-2 flex-wrap justify-center max-w-xs">
+                  {content.vocab.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        idx === currentVocabIndex ? "w-6 bg-blue-500" : "w-2 bg-gray-300"
+                      }`}
+                    ></div>
+                  ))}
+                </div>
+
+                <div className="bg-white w-full rounded-3xl p-8 shadow-xl flex flex-col items-center relative min-h-[380px] justify-between border-b-8 border-blue-100">
+                  <div className="flex-1 flex flex-col items-center justify-center w-full">
+                    <p className="text-xs text-gray-400 mb-2">
+                      Word {currentVocabIndex + 1} of {content.vocab.length}
+                    </p>
+                    <div className="mb-6 transform scale-110">
+                      {item.icon}
+                    </div>
+
+                    <h3
+                      className="text-4xl font-extrabold text-gray-800 mb-2 cursor-pointer active:scale-95 transition-transform text-center text-blue-600"
+                      onClick={() => handlePlayClick(item.audioWord)}
+                    >
+                      {item.word}
+                      <span className="text-lg text-blue-300 ml-1">🔈</span>
+                    </h3>
+                    <p className="text-xs text-gray-400 mb-4">(点击单词播放读音)</p>
+
+                    <div
+                      onClick={() => setShowVocabTranslation(true)}
+                      className="w-full text-center py-4 px-2 rounded-xl bg-gray-50 cursor-pointer"
+                    >
+                      <p
+                        className={`text-xl font-medium text-gray-700 transition-all duration-500 ${
+                          showVocabTranslation ? "revealed" : "blur-reveal"
+                        }`}
+                      >
+                        {item.cn}
+                      </p>
+                      {!showVocabTranslation && (
+                        <p className="text-xs text-gray-400 mt-[-20px] pointer-events-none">
+                          点击显示中文
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="w-full mt-6 bg-blue-50 rounded-2xl p-4 flex items-center justify-between border border-blue-100">
+                    <span className="text-blue-900 font-medium text-lg italic">
+                      "{item.sentence}"
+                    </span>
+                    <button
+                      onClick={() => handlePlayClick(item.audioSent)}
+                      className="btn-press bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition ml-3"
+                    >
+                      <IconVolume />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex justify-between w-full px-4 text-gray-400">
+                  <button
+                    onClick={prevCard}
+                    disabled={currentVocabIndex === 0}
+                    className="disabled:opacity-20 p-2 text-3xl btn-press"
+                  >
+                    ⬅️
+                  </button>
+                  <span className="text-sm mt-2 opacity-50">
+                    {currentVocabIndex + 1} / {content.vocab.length}
+                  </span>
+                  <button
+                    onClick={nextCard}
+                    disabled={currentVocabIndex === content.vocab.length - 1}
+                    className="disabled:opacity-20 p-2 text-3xl btn-press"
+                  >
+                    ➡️
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* TAB: 磨耳朵 */}
+          {activeTab === "audio" && (
+            <div className="bg-white rounded-2xl p-6 shadow-lg text-center space-y-6 mt-4 animate-fade-in">
+              <div className="text-6xl">🎧</div>
+              <div>
+                <h2 className="text-xl font-bold">情景磨耳朵</h2>
+                <p className="text-gray-500 text-sm mt-1">把今天的单词连成一小段话</p>
+              </div>
+              <div className="bg-gray-100 rounded-xl p-4 text-left">
+                <p className="text-gray-600 font-mono text-sm leading-relaxed">
+                  {content.scenarioText}
+                </p>
+              </div>
+              <div className="space-y-4">
+                <button
+                  onClick={() => handlePlayClick(content.scenarioAudio)}
+                  className="btn-press w-full py-6 rounded-xl flex items-center justify-center gap-3 font-bold text-xl text-white shadow-lg transition transform hover:scale-105 bg-blue-500 hover:bg-blue-600"
+                >
+                  {isPlaying && currentFile === content.scenarioAudio ? (
+                    <>
+                      <IconPause /> 暂停情景音频
+                    </>
+                  ) : (
+                    <>
+                      <IconPlay /> 播放情景音频
+                    </>
+                  )}
+                </button>
+
+                {currentFile === content.scenarioAudio && (
+                  <div className="bg-gray-50 p-3 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs text-gray-500">
+                        {formatTime(currentTime)}
+                      </span>
+                      <input
+                        type="range"
+                        min="0"
+                        max={duration || 0}
+                        step="0.1"
+                        value={currentTime}
+                        onChange={handleSeek}
+                        className="flex-1"
+                      />
+                      <span className="text-xs text-gray-500">
+                        {formatTime(duration)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: 剧本 */}
+          {activeTab === "guide" && (
+            <div className="space-y-4 animate-fade-in">
+              {content.script.map((step, index) => (
+                <div
+                  key={index}
+                  className={`bg-white rounded-xl shadow overflow-hidden transition-all duration-300 ${
+                    currentStep === index ? "ring-2 ring-blue-400" : "opacity-90"
+                  }`}
+                >
+                  <div
+                    className="p-3 cursor-pointer flex justify-between items-center bg-gray-50 border-b"
+                    onClick={() => setCurrentStep(index)}
+                  >
+                    <span className="font-bold text-gray-700">Step {step.step}</span>
+                    {currentStep === index ? <IconCheck /> : <IconCircle />}
+                  </div>
+                  {currentStep === index && (
+                    <div className="p-4 space-y-3">
+                      <div className="text-sm text-gray-700 bg-slate-50 p-2 rounded font-medium">
+                        ★ {step.action}
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 relative">
+                        <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                          家长说:
+                        </p>
+                        <p className="text-lg font-bold text-gray-800 pr-8">
+                          {step.parentSay}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          ({step.cn})
+                        </p>
+                        <button
+                          onClick={() => handlePlayClick(step.audio)}
+                          className="absolute right-2 top-2 text-blue-500 p-2 btn-press"
+                        >
+                          <IconVolume />
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-400 italic text-center">
+                        "{step.tip}"
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* TAB: 故事 */}
+          {activeTab === "story" && (
+            <div className="bg-white rounded-2xl p-6 shadow-lg space-y-4 mt-2 animate-fade-in flex flex-col h-full relative">
+              <div className="text-center border-b pb-4">
+                <h2 className="text-xl font-bold text-blue-600">{content.story.title}</h2>
+                <p className="text-xs text-gray-400">Read & Listen</p>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-6 pb-2">
+                <div className="bg-slate-50 p-4 rounded-xl">
+                  <p className="text-lg leading-relaxed font-bold text-gray-800">
+                    {content.story.textEn}
+                  </p>
+                </div>
+
+                <div
+                  className="relative p-4 rounded-xl border-2 border-dashed border-gray-200 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition"
+                  onClick={() => setShowStoryTranslation(true)}
+                >
+                  <p className="text-xs text-gray-400 mb-2 font-bold">
+                    中文大意（点击查看）:
+                  </p>
+                  <p
+                    className={`text-base leading-relaxed text-gray-600 transition-all duration-500 ${
+                      showStoryTranslation ? "revealed" : "blur-reveal"
+                    }`}
+                  >
+                    {content.story.textCn}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-auto pt-4 space-y-4">
+                <button
+                  onClick={() => handlePlayClick(content.story.audio)}
+                  className="btn-press w-full py-6 rounded-xl flex items-center justify-center gap-3 font-bold text-xl text-white shadow-lg transition transform hover:scale-105 bg-blue-500 hover:bg-blue-600"
+                >
+                  {isPlaying && currentFile === content.story.audio ? (
+                    <>
+                      <IconPause /> 暂停故事
+                    </>
+                  ) : (
+                    <>
+                      <IconPlay /> 播放故事
+                    </>
+                  )}
+                </button>
+
+                {currentFile === content.story.audio && (
+                  <div className="bg-gray-50 p-3 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs text-gray-500">
+                        {formatTime(currentTime)}
+                      </span>
+                      <input
+                        type="range"
+                        min="0"
+                        max={duration || 0}
+                        step="0.1"
+                        value={currentTime}
+                        onChange={handleSeek}
+                        className="flex-1"
+                      />
+                      <span className="text-xs text-gray-500">
+                        {formatTime(duration)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* Bottom Nav */}
+        <nav
+          className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-2 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 max-w-md mx-auto">
+          <button
+            onClick={() => setActiveTab("learn")}
+            className={`flex flex-col items-center p-2 rounded-lg flex-1 ${
+              activeTab === "learn" ? "text-blue-600" : "text-gray-400"
+            }`}
+          >
+            <span className="text-xl">📖</span>
+            <span className="text-xs font-medium">单词</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("audio")}
+            className={`flex flex-col items-center p-2 rounded-lg flex-1 ${
+              activeTab === "audio" ? "text-blue-600" : "text-gray-400"
+            }`}
+          >
+            <span className="text-xl">🎵</span>
+            <span className="text-xs font-medium">磨耳朵</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("guide")}
+            className={`flex flex-col items-center p-2 rounded-lg flex-1 ${
+              activeTab === "guide" ? "text-blue-600" : "text-gray-400"
+            }`}
+          >
+            <span className="text-xl">📋</span>
+            <span className="text-xs font-medium">剧本</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("story")}
+            className={`flex flex-col items-center p-2 rounded-lg flex-1 ${
+              activeTab === "story" ? "text-blue-600" : "text-gray-400"
+            }`}
+          >
+            <IconBook />
+            <span className="text-xs font-medium">故事</span>
+          </button>
+        </nav>
+      </div>
+    );
+  };
+
+  const root = ReactDOM.createRoot(document.getElementById("root"));
+  root.render(<DayApp />);
+</script>
+</body>
+</html>

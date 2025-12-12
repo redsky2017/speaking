@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Day 19: Clap Your Hands</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      touch-action: manipulation;
+    }
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    .btn-press:active {
+      transform: scale(0.95);
+      opacity: 0.8;
+    }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+    .blur-reveal {
+      filter: blur(8px);
+      opacity: 0.5;
+      transition: all 0.5s ease;
+      user-select: none;
+      cursor: pointer;
+    }
+    .revealed {
+      filter: blur(0);
+      opacity: 1;
+      cursor: default;
+    }
+
+    .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      background: #cbd5e1;
+      border-radius: 2px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      transition: transform 0.1s;
+    }
+    input[type=range]::-webkit-slider-thumb:active {
+      transform: scale(1.3);
+      background: #2563eb;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-gray-800 select-none">
+<div id="root"></div>
+
+<script type="text/babel">
+  const { useState, useEffect, useRef } = React;
+
+  // ⭐️ 每个文件改这里：15 / 16 / 17 / 18 / 19 / 20 / 21
+  const dayNumber = 19;
+
+  // ---- 图标 ----
+  const pageIcon   = () => <span className="text-6xl">🤚</span>;
+
+  const IconBall   = () => <span className="text-6xl">🟢</span>;
+  const IconThrow  = () => <span className="text-6xl">🤾‍♂️</span>;
+  const IconRoll   = () => <span className="text-6xl">🌀</span>;
+  const IconCatch  = () => <span className="text-6xl">✋</span>;
+
+  const IconRun    = () => <span className="text-6xl">🏃‍♂️</span>;
+  const IconJump   = () => <span className="text-6xl">🦘</span>;
+  const IconStop   = () => <span className="text-6xl">🛑</span>;
+  const IconGo     = () => <span className="text-6xl">🚦</span>;
+
+  const IconCar    = () => <span className="text-6xl">🚗</span>;
+  const IconBeep   = () => <span className="text-6xl">📣</span>;
+  const IconDrive  = () => <span className="text-6xl">🚙</span>;
+  const IconFast   = () => <span className="text-6xl">💨</span>;
+
+  const IconBlue   = () => <span className="text-6xl">🔵</span>;
+  const IconGreen  = () => <span className="text-6xl">🟢</span>;
+  const IconRed    = () => <span className="text-6xl">🔴</span>;
+  const IconYellow = () => <span className="text-6xl">🟡</span>;
+
+  const IconHand   = () => <span className="text-6xl">🤚</span>;
+  const IconClap   = () => <span className="text-6xl">👏</span>;
+  const IconHigh5  = () => <span className="text-6xl">🙌</span>;
+  const IconFinger = () => <span className="text-6xl">☝️</span>;
+
+  const IconOpen   = () => <span className="text-6xl">🚪</span>;
+  const IconClose  = () => <span className="text-6xl">❌</span>;
+  const IconDoor   = () => <span className="text-6xl">🚪</span>;
+  const IconBox    = () => <span className="text-6xl">📦</span>;
+
+  const IconPlayWeek = () => <span className="text-6xl">🎮</span>;
+
+  const IconVolume = () => <span>🔊</span>;
+  const IconPlay   = () => <span className="ml-1 text-xl">▶️</span>;
+  const IconPause  = () => <span className="text-xl">⏸️</span>;
+  const IconCheck  = () => <span className="text-blue-500">✅</span>;
+  const IconCircle = () => <div className="w-5 h-5 rounded-full border-2 border-gray-300"></div>;
+  const IconBook   = () => <span className="text-2xl">📚</span>;
+
+  // ---- Day 15–21 全部内容 ----
+  const allContent = {
+    15: {
+      title: "Day 15: Throw the Ball",
+      icon: <IconBall />,
+      vocab: [
+        {
+          word: "ball",
+          cn: "球",
+          icon: <IconBall />,
+          sentence: "Ball, ball, ball.",
+          audioWord: "word_ball.mp3",
+          audioSent: "sent_ball_ball_ball.mp3"
+        },
+        {
+          word: "throw",
+          cn: "扔 / 抛",
+          icon: <IconThrow />,
+          sentence: "Throw the ball.",
+          audioWord: "word_throw.mp3",
+          audioSent: "sent_throw_the_ball.mp3"
+        },
+        {
+          word: "roll",
+          cn: "滚动",
+          icon: <IconRoll />,
+          sentence: "Roll the ball.",
+          audioWord: "word_roll.mp3",
+          audioSent: "sent_roll_the_ball.mp3"
+        },
+        {
+          word: "catch",
+          cn: "接住",
+          icon: <IconCatch />,
+          sentence: "Catch the ball.",
+          audioWord: "word_catch.mp3",
+          audioSent: "sent_catch_the_ball.mp3"
+        }
+      ],
+      script: [
+        {
+          step: 1,
+          action: "动作：把球举高，让孩子用眼睛跟着球移动，再轻轻滚向他",
+          parentSay: "Ball, ball, ball.",
+          cn: "球球球，小球来啦。",
+          tip: "可以一边轻轻滚球，一边重复“ball, ball, ball”，让孩子先认识“球”。",
+          audio: "guide_day15_step1.mp3"
+        },
+        {
+          step: 2,
+          action: "动作：把球放到孩子手里，双手包着他的手一起做抛的动作",
+          parentSay: "Throw the ball.",
+          cn: "把球扔出去。",
+          tip: "先帮他一起扔，再慢慢放手，让他自己试着扔出去。",
+          audio: "guide_day15_step2.mp3"
+        },
+        {
+          step: 3,
+          action: "动作：你接住球，大声说Ball! 再扔回去，让游戏循环",
+          parentSay: "Throw the ball to me.",
+          cn: "把球扔给我。",
+          tip: "每次接到球时夸张地说“Ball!”让孩子觉得这是一个有节奏的游戏。",
+          audio: "guide_day15_step3.mp3"
+        }
+      ],
+      story: {
+        title: "Throw the Ball",
+        textEn: "Little Robot has a green ball. He holds the ball in his hands. Mom says, \"Ball, ball, ball.\" Robot smiles. Mom stands a few steps away. She opens her arms and says, \"Throw the ball.\" Robot swings his arms and throws. The ball rolls to Mom. She catches it and shouts, \"Ball!\" They throw and catch again and again. Robot laughs and says, \"Throw the ball to Mom!\"",
+        textCn: "小机器人有一个绿绿的球。他把球捧在手里。妈妈说：“Ball, ball, ball.（球球球。）”小机器人笑了。妈妈往后退几步，张开双臂说：“Throw the ball.（把球扔过来。）”小机器人用力一挥手，球滚到妈妈脚边。妈妈接住球，大声喊：“Ball！（球！）”他们一遍遍地扔球、接球，小机器人一边笑一边说：“Throw the ball to Mom!（把球扔给妈妈！）”",
+        audio: "story_day15.mp3"
+      },
+      scenarioText: "Ball, ball, ball. Roll the ball. Throw the ball. Catch the ball.",
+      scenarioAudio: "scenario_day15.mp3"
+    },
+
+    16: {
+      title: "Day 16: Run & Jump",
+      icon: <IconRun />,
+      vocab: [
+        {
+          word: "run",
+          cn: "跑",
+          icon: <IconRun />,
+          sentence: "Run, run, run.",
+          audioWord: "word_run.mp3",
+          audioSent: "sent_run_run_run.mp3"
+        },
+        {
+          word: "jump",
+          cn: "跳",
+          icon: <IconJump />,
+          sentence: "Jump, jump, jump!",
+          audioWord: "word_jump.mp3",
+          audioSent: "sent_jump_jump_jump.mp3"
+        },
+        {
+          word: "stop",
+          cn: "停",
+          icon: <IconStop />,
+          sentence: "Stop!",
+          audioWord: "word_stop.mp3",
+          audioSent: "sent_stop.mp3"
+        },
+        {
+          word: "go",
+          cn: "走 / 出发",
+          icon: <IconGo />,
+          sentence: "Go, go, go!",
+          audioWord: "word_go.mp3",
+          audioSent: "sent_go_go_go.mp3"
+        }
+      ],
+      script: [
+        {
+          step: 1,
+          action: "动作：在地上画一条线，和孩子站在线后，做准备跑步的姿势",
+          parentSay: "Run, run, run.",
+          cn: "跑跑跑，我们来跑步。",
+          tip: "可以从慢跑开始，边跑边念“run, run, run”，突然停下来，增加乐趣。",
+          audio: "guide_day16_step1.mp3"
+        },
+        {
+          step: 2,
+          action: "动作：在前面放一个软垫或枕头，当作“跳跳点”",
+          parentSay: "Jump, jump, jump!",
+          cn: "跳跳跳，跳起来！",
+          tip: "先自己示范像小兔子一样跳，再牵着孩子的手一起跳到垫子上。",
+          audio: "guide_day16_step2.mp3"
+        },
+        {
+          step: 3,
+          action: "动作：交替说 run / jump，让孩子听指令做动作",
+          parentSay: "Run! Jump! Run! Jump!",
+          cn: "跑！跳！跑！跳！",
+          tip: "可以故意“乱喊”几次，看孩子有没有认真听，做错了就一起大笑放松。",
+          audio: "guide_day16_step3.mp3"
+        }
+      ],
+      story: {
+        title: "Run and Jump",
+        textEn: "Little Robot goes to the park with Mom. There is a long path and a soft grass hill. Mom says, \"Run, run, run.\" Robot runs down the path. His feet go tap, tap, tap. Then Mom points to the hill and says, \"Jump, jump, jump!\" Robot bends his knees and jumps up the hill like a little rabbit. At the top, they both laugh and say, \"Run and jump is fun!\"",
+        textCn: "小机器人和妈妈一起去公园。那里有一条长长的小路，还有一块软软的小草坡。妈妈说：“Run, run, run.（跑跑跑。）”小机器人在小路上跑起来，脚步发出“嗒嗒嗒”的声音。然后妈妈指着小草坡说：“Jump, jump, jump!（跳跳跳！）”小机器人弯弯腿，像小兔子一样一跳一跳往上跳。到了坡顶，他们一起笑着说：“Run and jump is fun!（跑跑跳跳真好玩！）”",
+        audio: "story_day16.mp3"
+      },
+      scenarioText: "Run, run, run. Jump, jump, jump. Go, go, go. Stop!",
+      scenarioAudio: "scenario_day16.mp3"
+    },
+
+    17: {
+      title: "Day 17: Beep, Beep, Car!",
+      icon: <IconCar />,
+      vocab: [
+        {
+          word: "car",
+          cn: "汽车",
+          icon: <IconCar />,
+          sentence: "Car, car, car.",
+          audioWord: "word_car.mp3",
+          audioSent: "sent_car_car_car.mp3"
+        },
+        {
+          word: "beep",
+          cn: "嘀嘀 / 按喇叭",
+          icon: <IconBeep />,
+          sentence: "Beep, beep, car!",
+          audioWord: "word_beep.mp3",
+          audioSent: "sent_beep_beep_car.mp3"
+        },
+        {
+          word: "drive",
+          cn: "开车",
+          icon: <IconDrive />,
+          sentence: "Drive the car.",
+          audioWord: "word_drive.mp3",
+          audioSent: "sent_drive_the_car.mp3"
+        },
+        {
+          word: "fast",
+          cn: "快的",
+          icon: <IconFast />,
+          sentence: "So fast.",
+          audioWord: "word_fast.mp3",
+          audioSent: "sent_so_fast.mp3"
+        }
+      ],
+      script: [
+        {
+          step: 1,
+          action: "动作：拿一个盘子当方向盘，坐在地上假装开车",
+          parentSay: "Car, car, car.",
+          cn: "开车啦，开车啦。",
+          tip: "夸张地左右转方向盘，让孩子也拿一个“方向盘”跟着学。",
+          audio: "guide_day17_step1.mp3"
+        },
+        {
+          step: 2,
+          action: "动作：假装前面有小动物或路人，突然按喇叭",
+          parentSay: "Beep, beep, car!",
+          cn: "嘀嘀，汽车来了！",
+          tip: "可以和孩子约定：听到“beep, beep”就要原地跳一下或者挥挥手。",
+          audio: "guide_day17_step2.mp3"
+        },
+        {
+          step: 3,
+          action: "动作：在房间里绕圈“开车”，遇到门口或玩偶就按喇叭",
+          parentSay: "Beep, beep! Car is coming!",
+          cn: "嘀嘀，汽车要开过来了！",
+          tip: "可以让孩子轮流当“车”和“路人”，增加角色扮演的乐趣。",
+          audio: "guide_day17_step3.mp3"
+        }
+      ],
+      story: {
+        title: "Beep, Beep, Car",
+        textEn: "Little Robot sits on the floor with a round plate in his hands. \"Car, car, car,\" he says. He drives around the room. Mom stands in front of him like a big tree. Robot smiles and says, \"Beep, beep, car!\" Mom steps to the side and laughs. Robot drives past the sofa, the chair, and the door. Every time he sees something, he shouts, \"Beep, beep!\" The room becomes a busy car road.",
+        textCn: "小机器人坐在地上，手里拿着一个圆盘，当作方向盘。他一边转方向盘一边说：“Car, car, car.（汽车，汽车，汽车。）”他在房间里开来开去。妈妈站在他前面，像一棵大树。小机器人笑着说：“Beep, beep, car!（嘀嘀，汽车来了！）”妈妈赶紧让开，一边笑。小机器人开车从沙发、椅子和门口旁边经过，每看到一个东西就大叫：“Beep, beep!（嘀嘀！）”整个房间变成了热闹的马路。",
+        audio: "story_day17.mp3"
+      },
+      scenarioText: "Car, car, car. Drive the car. Beep, beep, car! So fast!",
+      scenarioAudio: "scenario_day17.mp3"
+    },
+
+    18: {
+      title: "Day 18: Blue & Green & More",
+      icon: <IconBlue />,
+      vocab: [
+        {
+          word: "blue",
+          cn: "蓝色",
+          icon: <IconBlue />,
+          sentence: "I see blue.",
+          audioWord: "word_blue.mp3",
+          audioSent: "sent_i_see_blue.mp3"
+        },
+        {
+          word: "green",
+          cn: "绿色",
+          icon: <IconGreen />,
+          sentence: "I see green.",
+          audioWord: "word_green.mp3",
+          audioSent: "sent_i_see_green.mp3"
+        },
+        {
+          word: "red",
+          cn: "红色",
+          icon: <IconRed />,
+          sentence: "I see red.",
+          audioWord: "word_red_color.mp3",
+          audioSent: "sent_i_see_red.mp3"
+        },
+        {
+          word: "yellow",
+          cn: "黄色",
+          icon: <IconYellow />,
+          sentence: "I see yellow.",
+          audioWord: "word_yellow.mp3",
+          audioSent: "sent_i_see_yellow.mp3"
+        }
+      ],
+      script: [
+        {
+          step: 1,
+          action: "动作：拿出一件蓝色和一件绿色的物品，放在孩子面前",
+          parentSay: "Blue. Green.",
+          cn: "这是蓝色，这是绿色。",
+          tip: "可以让孩子用手指点一下一次说“blue”或“green”，帮助建立颜色和单词的对应。",
+          audio: "guide_day18_step1.mp3"
+        },
+        {
+          step: 2,
+          action: "动作：指着蓝色的东西，慢慢说出句子",
+          parentSay: "I see blue.",
+          cn: "我看到蓝色了。",
+          tip: "说完可以用夸张的眼神“发现”蓝色，表现出很惊喜的样子。",
+          audio: "guide_day18_step2.mp3"
+        },
+        {
+          step: 3,
+          action: "动作：开始寻宝游戏，让孩子去找蓝色或绿色的东西并摸一下",
+          parentSay: "Find blue. Find green.",
+          cn: "去找蓝色，去找绿色。",
+          tip: "每次找到颜色就一起说“I see blue / green.”，并给一个小拥抱或击掌。",
+          audio: "guide_day18_step3.mp3"
+        }
+      ],
+      story: {
+        title: "I See Blue and Green",
+        textEn: "Little Robot plays a color game with Mom. Mom holds a blue ball and a green block. \"Blue. Green,\" she says. Robot points to the ball. Mom says, \"I see blue.\" Robot looks around the room. He sees a blue pillow and a green plant. He runs to the pillow and shouts, \"I see blue!\" Then he runs to the plant and says, \"I see green!\" Mom claps and says, \"Colors are fun!\"",
+        textCn: "小机器人和妈妈在玩颜色游戏。妈妈拿着一个蓝色的球和一块绿色的积木，说：“Blue. Green.（蓝色，绿色。）”小机器人用手指点了点球。妈妈说：“I see blue.（我看到蓝色了。）”小机器人东看看西看看，发现房间里有一个蓝色的靠垫，还有一盆绿色的小植物。他跑到靠垫那里大叫：“I see blue!（我看到蓝色！）”又跑到植物旁边说：“I see green!（我看到绿色！）”妈妈拍手说：“Colors are fun!（颜色真好玩！）”",
+        audio: "story_day18.mp3"
+      },
+      scenarioText: "Blue, green, red, yellow. I see blue. I see green. I see red. I see yellow.",
+      scenarioAudio: "scenario_day18.mp3"
+    },
+
+    19: {
+      title: "Day 19: Clap Your Hands",
+      icon: <IconClap />,
+      vocab: [
+        {
+          word: "hand",
+          cn: "手",
+          icon: <IconHand />,
+          sentence: "My hand.",
+          audioWord: "word_hand.mp3",
+          audioSent: "sent_my_hand.mp3"
+        },
+        {
+          word: "clap",
+          cn: "拍手",
+          icon: <IconClap />,
+          sentence: "Clap your hands.",
+          audioWord: "word_clap.mp3",
+          audioSent: "sent_clap_your_hands.mp3"
+        },
+        {
+          word: "high five",
+          cn: "击掌",
+          icon: <IconHigh5 />,
+          sentence: "High five!",
+          audioWord: "word_high_five.mp3",
+          audioSent: "sent_high_five.mp3"
+        },
+        {
+          word: "finger",
+          cn: "手指",
+          icon: <IconFinger />,
+          sentence: "Little finger.",
+          audioWord: "word_finger.mp3",
+          audioSent: "sent_little_finger.mp3"
+        }
+      ],
+      script: [
+        {
+          step: 1,
+          action: "动作：轻轻捧起孩子的两只手，晃一晃",
+          parentSay: "My hand. Your hand.",
+          cn: "我的手，你的手。",
+          tip: "可以先指自己的手说“my hand”，再指孩子的手说“your hand”。",
+          audio: "guide_day19_step1.mp3"
+        },
+        {
+          step: 2,
+          action: "动作：把孩子的双手合在一起，慢慢带着他拍手",
+          parentSay: "Clap your hands.",
+          cn: "拍拍手。",
+          tip: "一边拍一边数节奏，比如“one, two, three”，让拍手变成小鼓点。",
+          audio: "guide_day19_step2.mp3"
+        },
+        {
+          step: 3,
+          action: "动作：开始节奏游戏，比如拍两下停一下，再拍三下",
+          parentSay: "Clap, clap, clap!",
+          cn: "拍拍拍！",
+          tip: "故意突然停下来，看孩子会不会也停，变成“听指令”的游戏。",
+          audio: "guide_day19_step3.mp3"
+        }
+      ],
+      story: {
+        title: "Clap, Clap, Clap",
+        textEn: "Little Robot sits on the floor. Mom holds his hands and says, \"My hand. Your hand.\" Robot wiggles his fingers. Mom smiles and says, \"Clap your hands.\" Clap, clap, clap. The sound is like little drums. Robot claps fast. Robot claps slow. Mom claps with him. They clap together and laugh. Robot says, \"Clap, clap, clap!\"",
+        textCn: "小机器人坐在地上。妈妈握着他的手说：“My hand. Your hand.（我的手，你的手。）”小机器人晃了晃自己的手指。妈妈笑着说：“Clap your hands.（拍拍手。）” clap, clap, clap，听起来像小鼓在敲。小机器人拍得快一点，又拍得慢一点。妈妈也跟着一起拍。他们一边拍一边笑。小机器人说：“Clap, clap, clap!（拍拍拍！）”",
+        audio: "story_day19.mp3"
+      },
+      scenarioText: "My hand. Your hand. Clap your hands. High five! Little finger.",
+      scenarioAudio: "scenario_day19.mp3"
+    },
+
+    20: {
+      title: "Day 20: Open & Close",
+      icon: <IconOpen />,
+      vocab: [
+        {
+          word: "open",
+          cn: "打开",
+          icon: <IconOpen />,
+          sentence: "Open the door.",
+          audioWord: "word_open.mp3",
+          audioSent: "sent_open_the_door.mp3"
+        },
+        {
+          word: "close",
+          cn: "关上",
+          icon: <IconClose />,
+          sentence: "Close the door.",
+          audioWord: "word_close.mp3",
+          audioSent: "sent_close_the_door.mp3"
+        },
+        {
+          word: "door",
+          cn: "门",
+          icon: <IconDoor />,
+          sentence: "Open the door.",
+          audioWord: "word_door.mp3",
+          audioSent: "sent_open_the_door.mp3"
+        },
+        {
+          word: "box",
+          cn: "盒子",
+          icon: <IconBox />,
+          sentence: "Open the box.",
+          audioWord: "word_box.mp3",
+          audioSent: "sent_open_the_box.mp3"
+        }
+      ],
+      script: [
+        {
+          step: 1,
+          action: "动作：站在门前，手放在门把上，先不要动",
+          parentSay: "Open or close?",
+          cn: "打开还是关上呢？",
+          tip: "先问问孩子，让他用手指指一指，增加参与感。",
+          audio: "guide_day20_step1.mp3"
+        },
+        {
+          step: 2,
+          action: "动作：慢慢把门打开一条小缝，再完全打开",
+          parentSay: "Open the door.",
+          cn: "把门打开。",
+          tip: "可以假装门后有惊喜，打开时发出“哇——”的声音。",
+          audio: "guide_day20_step2.mp3"
+        },
+        {
+          step: 3,
+          action: "动作：请孩子用手把门轻轻关上",
+          parentSay: "Close the door.",
+          cn: "把门关上。",
+          tip: "可以换成抽屉、盒子、书本，一起玩“开开关关”的游戏。",
+          audio: "guide_day20_step3.mp3"
+        }
+      ],
+      story: {
+        title: "Open the Door, Close the Door",
+        textEn: "Little Robot stands in front of a big door. Mom asks, \"Open or close?\" Robot points to the door. Mom turns the handle and says, \"Open the door.\" The door opens with a soft creak. Behind the door is a box of toys. Robot smiles. After play time, Mom says, \"Close the door.\" Robot pushes the door gently. Click. The room is quiet again. Robot whispers, \"Open, close. Open, close.\"",
+        textCn: "小机器人站在一扇大门前。妈妈问：“Open or close?（打开还是关上？）”小机器人用手指了指门。妈妈转动门把手，说：“Open the door.（把门打开。）”门“吱呀”一声慢慢打开，门后面是一盒玩具。小机器人笑了。玩完以后，妈妈说：“Close the door.（把门关上。）”小机器人轻轻把门推回去，“咔嗒”一声，房间又安静下来。小机器人小声说：“Open, close. Open, close.（开开关关。）”",
+        audio: "story_day20.mp3"
+      },
+      scenarioText: "Open the door. Close the door. Open the box. Close the box.",
+      scenarioAudio: "scenario_day20.mp3"
+    },
+
+    21: {
+      title: "Day 21: Let's Play! (Review)",
+      icon: <IconPlayWeek />,
+      vocab: [
+        { word: "ball",  cn: "球",     icon: <IconBall />,   sentence: "Throw the ball.",          audioWord: "word_ball.mp3",  audioSent: "sent_throw_the_ball.mp3" },
+        { word: "throw", cn: "扔 / 抛", icon: <IconThrow />,  sentence: "Throw the ball to me.",   audioWord: "word_throw.mp3", audioSent: "sent_throw_the_ball_to_me.mp3" },
+        { word: "run",   cn: "跑",     icon: <IconRun />,    sentence: "Run, run, run.",          audioWord: "word_run.mp3",   audioSent: "sent_run_run_run.mp3" },
+        { word: "jump",  cn: "跳",     icon: <IconJump />,   sentence: "Jump, jump, jump!",       audioWord: "word_jump.mp3",  audioSent: "sent_jump_jump_jump.mp3" },
+        { word: "car",   cn: "汽车",   icon: <IconCar />,    sentence: "Beep, beep, car!",        audioWord: "word_car.mp3",   audioSent: "sent_beep_beep_car.mp3" },
+        { word: "beep",  cn: "嘀嘀",   icon: <IconBeep />,   sentence: "Beep, beep!",             audioWord: "word_beep.mp3",  audioSent: "sent_beep_beep.mp3" },
+        { word: "blue",  cn: "蓝色",   icon: <IconBlue />,   sentence: "I see blue.",             audioWord: "word_blue.mp3",  audioSent: "sent_i_see_blue.mp3" },
+        { word: "green", cn: "绿色",   icon: <IconGreen />,  sentence: "I see green.",            audioWord: "word_green.mp3", audioSent: "sent_i_see_green.mp3" },
+        { word: "hand",  cn: "手",     icon: <IconHand />,   sentence: "Clap your hands.",        audioWord: "word_hand.mp3",  audioSent: "sent_clap_your_hands.mp3" },
+        { word: "clap",  cn: "拍手",   icon: <IconClap />,   sentence: "Clap, clap, clap.",       audioWord: "word_clap.mp3",  audioSent: "sent_clap_clap_clap.mp3" },
+        { word: "open",  cn: "打开",   icon: <IconOpen />,   sentence: "Open the door.",          audioWord: "word_open.mp3",  audioSent: "sent_open_the_door.mp3" },
+        { word: "close", cn: "关上",   icon: <IconClose />,  sentence: "Close the door.",         audioWord: "word_close.mp3", audioSent: "sent_close_the_door.mp3" }
+      ],
+      script: [
+        {
+          step: 1,
+          action: "动作：告诉孩子要玩“听指令做动作”的游戏（Simon Says 简化版）",
+          parentSay: "Let's play! Listen and do.",
+          cn: "我们来玩游戏！听一听，做一做。",
+          tip: "先和孩子约定好：听到单词就做动作，做错了就被挠痒痒。",
+          audio: "guide_day21_step1.mp3"
+        },
+        {
+          step: 2,
+          action: "动作：轮流下指令，比如 ball, run, jump, clap, open",
+          parentSay: "Ball! Run! Jump! Clap your hands!",
+          cn: "球！跑！跳！拍拍手！",
+          tip: "节奏可以慢慢加快，让孩子在“紧张又好笑”的状态下复习所有动词。",
+          audio: "guide_day21_step2.mp3"
+        },
+        {
+          step: 3,
+          action: "动作：游戏结束后，把孩子抱在怀里，表扬他这一周的努力",
+          parentSay: "Good job! Let's play again tomorrow.",
+          cn: "太棒啦！我们明天再玩。",
+          tip: "多次重复“Good job!” 作为第三周的收尾口号。",
+          audio: "guide_day21_step3.mp3"
+        }
+      ],
+      story: {
+        title: "Let's Play!",
+        textEn: "It is game day. Little Robot stands in the middle of the room. Mom smiles and says, \"Let's play!\" She holds a ball and says, \"Ball!\" Robot throws the ball. Mom says, \"Run!\" Robot runs. \"Jump!\" Robot jumps. \"Clap your hands!\" Clap, clap, clap. Mom points to the door. \"Open the door. Close the door.\" Robot opens and closes the door with a giggle. At the end, Mom gives him a big hug and says, \"Good job!\" Robot laughs and says, \"Let's play again!\"",
+        textCn: "今天是游戏日。小机器人站在房间中间。妈妈笑着说：“Let's play!（我们来玩吧！）”她拿起一个球，说：“Ball!（球！）”小机器人把球扔出去。妈妈说：“Run!（跑！）”小机器人就跑起来。“Jump!（跳！）”小机器人就跳起来。“Clap your hands!（拍拍手！）” clap, clap, clap。妈妈指向门，说：“Open the door. Close the door.（把门打开，再关上。）”小机器人一边开门关门，一边咯咯笑。最后，妈妈给了他一个大大的拥抱，说：“Good job!（太棒啦！）”小机器人笑着说：“Let's play again!（我们再玩一次！）”",
+        audio: "story_day21.mp3"
+      },
+      scenarioText: "Ball! Throw the ball. Run, run, run. Jump, jump, jump. Clap your hands. Open the door. Close the door. Let's play!",
+      scenarioAudio: "scenario_day21.mp3"
+    }
+  };
+
+  // -------- React App --------
+  const DayApp = () => {
+    const content = allContent[dayNumber];
+
+    const [activeTab, setActiveTab] = useState("learn");
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentFile, setCurrentFile] = useState(null);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const audioRef = useRef(new Audio());
+
+    const [currentVocabIndex, setCurrentVocabIndex] = useState(0);
+    const [showVocabTranslation, setShowVocabTranslation] = useState(false);
+    const [showStoryTranslation, setShowStoryTranslation] = useState(false);
+    const [currentStep, setCurrentStep] = useState(0);
+
+    const touchStartX = useRef(0);
+    const touchEndX = useRef(0);
+
+    useEffect(() => {
+      const audio = audioRef.current;
+      const updateTime = () => setCurrentTime(audio.currentTime);
+      const onLoadedMetadata = () => {
+        if (!isNaN(audio.duration)) setDuration(audio.duration);
+      };
+      const onEnded = () => {
+        setIsPlaying(false);
+        setCurrentTime(0);
+      };
+
+      audio.addEventListener("timeupdate", updateTime);
+      audio.addEventListener("loadedmetadata", onLoadedMetadata);
+      audio.addEventListener("ended", onEnded);
+
+      return () => {
+        audio.removeEventListener("timeupdate", updateTime);
+        audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+        audio.removeEventListener("ended", onEnded);
+        audio.pause();
+      };
+    }, []);
+
+    const handlePlayClick = (filename) => {
+      const audio = audioRef.current;
+
+      if (currentFile === filename) {
+        if (isPlaying) {
+          audio.pause();
+          setIsPlaying(false);
+        } else {
+          audio.play().then(() => setIsPlaying(true));
+        }
+        return;
+      }
+
+      audio.src = filename;
+      setCurrentFile(filename);
+      setCurrentTime(0);
+      setDuration(0);
+
+      audio.play()
+        .then(() => setIsPlaying(true))
+        .catch((err) => {
+          console.error("播放失败", err);
+          alert("找不到音频文件: " + filename + "\n请确保 mp3 文件和 html 在同一目录。");
+          setIsPlaying(false);
+        });
+    };
+
+    const handleSeek = (e) => {
+      const t = parseFloat(e.target.value);
+      setCurrentTime(t);
+      audioRef.current.currentTime = t;
+    };
+
+    const formatTime = (t) => {
+      if (!t || isNaN(t)) return "0:00";
+      const mins = Math.floor(t / 60);
+      const secs = Math.floor(t % 60);
+      return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+    };
+
+    const nextCard = () => {
+      if (currentVocabIndex < content.vocab.length - 1) {
+        setCurrentVocabIndex((prev) => prev + 1);
+        setShowVocabTranslation(false);
+      }
+    };
+    const prevCard = () => {
+      if (currentVocabIndex > 0) {
+        setCurrentVocabIndex((prev) => prev - 1);
+        setShowVocabTranslation(false);
+      }
+    };
+
+    const handleTouchStart = (e) => {
+      touchStartX.current = e.targetTouches[0].clientX;
+    };
+    const handleTouchMove = (e) => {
+      touchEndX.current = e.targetTouches[0].clientX;
+    };
+    const handleTouchEnd = () => {
+      if (!touchStartX.current || !touchEndX.current) return;
+      const diff = touchStartX.current - touchEndX.current;
+      if (diff > 50) nextCard();
+      if (diff < -50) prevCard();
+      touchStartX.current = 0;
+      touchEndX.current = 0;
+    };
+
+    return (
+      <div className="flex flex-col min-h-screen max-w-md mx-auto bg-slate-50 shadow-2xl relative pb-28">
+        {/* Header */}
+        <header className="bg-blue-500 text-white p-4 shadow-md text-center sticky top-0 z-10">
+          <h1 className="text-xl font-bold flex items-center justify-center gap-2">
+            {content.icon} {content.title}
+          </h1>
+          <p className="text-xs text-blue-100">Play Time Week · Day {dayNumber}</p>
+        </header>
+
+        {/* Main */}
+        <main className="flex-1 p-4 overflow-y-auto pb-24 hide-scrollbar">
+          {/* 单词 */}
+          {activeTab === "learn" && (() => {
+            const item = content.vocab[currentVocabIndex];
+            return (
+              <div
+                className="flex-1 flex flex-col justify-center items-center space-y-6 animate-fade-in"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                {/* 进度点 */}
+                <div className="flex gap-1 mb-2 flex-wrap justify-center max-w-xs">
+                  {content.vocab.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        idx === currentVocabIndex ? "w-6 bg-blue-500" : "w-2 bg-gray-300"
+                      }`}
+                    ></div>
+                  ))}
+                </div>
+
+                <div className="bg-white w-full rounded-3xl p-8 shadow-xl flex flex-col items-center relative min-h-[380px] justify-between border-b-8 border-blue-100">
+                  <div className="flex-1 flex flex-col items-center justify-center w-full">
+                    <p className="text-xs text-gray-400 mb-2">
+                      Word {currentVocabIndex + 1} of {content.vocab.length}
+                    </p>
+                    <div className="mb-6 transform scale-110">
+                      {item.icon}
+                    </div>
+
+                    <h3
+                      className="text-4xl font-extrabold text-gray-800 mb-2 cursor-pointer active:scale-95 transition-transform text-center text-blue-600"
+                      onClick={() => handlePlayClick(item.audioWord)}
+                    >
+                      {item.word}
+                      <span className="text-lg text-blue-300 ml-1">🔈</span>
+                    </h3>
+                    <p className="text-xs text-gray-400 mb-4">(点击单词播放读音)</p>
+
+                    <div
+                      onClick={() => setShowVocabTranslation(true)}
+                      className="w-full text-center py-4 px-2 rounded-xl bg-gray-50 cursor-pointer"
+                    >
+                      <p
+                        className={`text-xl font-medium text-gray-700 transition-all duration-500 ${
+                          showVocabTranslation ? "revealed" : "blur-reveal"
+                        }`}
+                      >
+                        {item.cn}
+                      </p>
+                      {!showVocabTranslation && (
+                        <p className="text-xs text-gray-400 mt-[-20px] pointer-events-none">
+                          点击显示中文
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="w-full mt-6 bg-blue-50 rounded-2xl p-4 flex items-center justify-between border border-blue-100">
+                    <span className="text-blue-900 font-medium text-lg italic">
+                      "{item.sentence}"
+                    </span>
+                    <button
+                      onClick={() => handlePlayClick(item.audioSent)}
+                      className="btn-press bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition ml-3"
+                    >
+                      <IconVolume />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex justify-between w-full px-4 text-gray-400">
+                  <button
+                    onClick={prevCard}
+                    disabled={currentVocabIndex === 0}
+                    className="disabled:opacity-20 p-2 text-3xl btn-press"
+                  >
+                    ⬅️
+                  </button>
+                  <span className="text-sm mt-2 opacity-50">
+                    {currentVocabIndex + 1} / {content.vocab.length}
+                  </span>
+                  <button
+                    onClick={nextCard}
+                    disabled={currentVocabIndex === content.vocab.length - 1}
+                    className="disabled:opacity-20 p-2 text-3xl btn-press"
+                  >
+                    ➡️
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* 磨耳朵 */}
+          {activeTab === "audio" && (
+            <div className="bg-white rounded-2xl p-6 shadow-lg text-center space-y-6 mt-4 animate-fade-in">
+              <div className="text-6xl">🎧</div>
+              <div>
+                <h2 className="text-xl font-bold">情景磨耳朵</h2>
+                <p className="text-gray-500 text-sm mt-1">把今天的单词连成一小段话</p>
+              </div>
+              <div className="bg-gray-100 rounded-xl p-4 text-left">
+                <p className="text-gray-600 font-mono text-sm leading-relaxed">
+                  {content.scenarioText}
+                </p>
+              </div>
+              <div className="space-y-4">
+                <button
+                  onClick={() => handlePlayClick(content.scenarioAudio)}
+                  className="btn-press w-full py-6 rounded-xl flex items-center justify-center gap-3 font-bold text-xl text-white shadow-lg transition transform hover:scale-105 bg-blue-500 hover:bg-blue-600"
+                >
+                  {isPlaying && currentFile === content.scenarioAudio ? (
+                    <>
+                      <IconPause /> 暂停情景音频
+                    </>
+                  ) : (
+                    <>
+                      <IconPlay /> 播放情景音频
+                    </>
+                  )}
+                </button>
+
+                {currentFile === content.scenarioAudio && (
+                  <div className="bg-gray-50 p-3 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs text-gray-500">
+                        {formatTime(currentTime)}
+                      </span>
+                      <input
+                        type="range"
+                        min="0"
+                        max={duration || 0}
+                        step="0.1"
+                        value={currentTime}
+                        onChange={handleSeek}
+                        className="flex-1"
+                      />
+                      <span className="text-xs text-gray-500">
+                        {formatTime(duration)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 剧本 */}
+          {activeTab === "guide" && (
+            <div className="space-y-4 animate-fade-in">
+              {content.script.map((step, index) => (
+                <div
+                  key={index}
+                  className={`bg-white rounded-xl shadow overflow-hidden transition-all duration-300 ${
+                    currentStep === index ? "ring-2 ring-blue-400" : "opacity-90"
+                  }`}
+                >
+                  <div
+                    className="p-3 cursor-pointer flex justify-between items-center bg-gray-50 border-b"
+                    onClick={() => setCurrentStep(index)}
+                  >
+                    <span className="font-bold text-gray-700">Step {step.step}</span>
+                    {currentStep === index ? <IconCheck /> : <IconCircle />}
+                  </div>
+                  {currentStep === index && (
+                    <div className="p-4 space-y-3">
+                      <div className="text-sm text-gray-700 bg-slate-50 p-2 rounded font-medium">
+                        ★ {step.action}
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 relative">
+                        <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                          家长说:
+                        </p>
+                        <p className="text-lg font-bold text-gray-800 pr-8">
+                          {step.parentSay}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          ({step.cn})
+                        </p>
+                        <button
+                          onClick={() => handlePlayClick(step.audio)}
+                          className="absolute right-2 top-2 text-blue-500 p-2 btn-press"
+                        >
+                          <IconVolume />
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-400 italic text-center">
+                        "{step.tip}"
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 故事 */}
+          {activeTab === "story" && (
+            <div className="bg-white rounded-2xl p-6 shadow-lg space-y-4 mt-2 animate-fade-in flex flex-col h-full relative">
+              <div className="text-center border-b pb-4">
+                <h2 className="text-xl font-bold text-blue-600">{content.story.title}</h2>
+                <p className="text-xs text-gray-400">Read & Listen</p>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-6 pb-2">
+                <div className="bg-slate-50 p-4 rounded-xl">
+                  <p className="text-lg leading-relaxed font-bold text-gray-800">
+                    {content.story.textEn}
+                  </p>
+                </div>
+
+                <div
+                  className="relative p-4 rounded-xl border-2 border-dashed border-gray-200 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition"
+                  onClick={() => setShowStoryTranslation(true)}
+                >
+                  <p className="text-xs text-gray-400 mb-2 font-bold">
+                    中文大意（点击查看）:
+                  </p>
+                  <p
+                    className={`text-base leading-relaxed text-gray-600 transition-all duration-500 ${
+                      showStoryTranslation ? "revealed" : "blur-reveal"
+                    }`}
+                  >
+                    {content.story.textCn}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-auto pt-4 space-y-4">
+                <button
+                  onClick={() => handlePlayClick(content.story.audio)}
+                  className="btn-press w-full py-6 rounded-xl flex items-center justify-center gap-3 font-bold text-xl text-white shadow-lg transition transform hover:scale-105 bg-blue-500 hover:bg-blue-600"
+                >
+                  {isPlaying && currentFile === content.story.audio ? (
+                    <>
+                      <IconPause /> 暂停故事
+                    </>
+                  ) : (
+                    <>
+                      <IconPlay /> 播放故事
+                    </>
+                  )}
+                </button>
+
+                {currentFile === content.story.audio && (
+                  <div className="bg-gray-50 p-3 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs text-gray-500">
+                        {formatTime(currentTime)}
+                      </span>
+                      <input
+                        type="range"
+                        min="0"
+                        max={duration || 0}
+                        step="0.1"
+                        value={currentTime}
+                        onChange={handleSeek}
+                        className="flex-1"
+                      />
+                      <span className="text-xs text-gray-500">
+                        {formatTime(duration)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* Bottom Nav */}
+        <nav
+          className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-2 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 max-w-md mx-auto">
+          <button
+            onClick={() => setActiveTab("learn")}
+            className={`flex flex-col items-center p-2 rounded-lg flex-1 ${
+              activeTab === "learn" ? "text-blue-600" : "text-gray-400"
+            }`}
+          >
+            <span className="text-xl">📖</span>
+            <span className="text-xs font-medium">单词</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("audio")}
+            className={`flex flex-col items-center p-2 rounded-lg flex-1 ${
+              activeTab === "audio" ? "text-blue-600" : "text-gray-400"
+            }`}
+          >
+            <span className="text-xl">🎵</span>
+            <span className="text-xs font-medium">磨耳朵</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("guide")}
+            className={`flex flex-col items-center p-2 rounded-lg flex-1 ${
+              activeTab === "guide" ? "text-blue-600" : "text-gray-400"
+            }`}
+          >
+            <span className="text-xl">📋</span>
+            <span className="text-xs font-medium">剧本</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("story")}
+            className={`flex flex-col items-center p-2 rounded-lg flex-1 ${
+              activeTab === "story" ? "text-blue-600" : "text-gray-400"
+            }`}
+          >
+            <IconBook />
+            <span className="text-xs font-medium">故事</span>
+          </button>
+        </nav>
+      </div>
+    );
+  };
+
+  const root = ReactDOM.createRoot(document.getElementById("root"));
+  root.render(<DayApp />);
+</script>
+</body>
+</html>
